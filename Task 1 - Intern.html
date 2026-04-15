@@ -34,7 +34,7 @@
         ];
       //{# YOUR CODE HERE #}
       function format_date(dateStr) {
-        const options = { year: "numeric", month: "long", day: "numeric" };
+        const options = { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" };
         return new Date(dateStr).toLocaleDateString("en-US", options);
       }
   
