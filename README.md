@@ -42,4 +42,4 @@ Instead of using the standard `requests` library, I chose an **asynchronous appr
 ### Running the script
 
 ```bash
-python3 <script_name>.py
+python3 task2.py
