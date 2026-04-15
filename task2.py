@@ -1,40 +1,41 @@
-#CHINAZA - Task 2
+# CHINAZA - Task 2
+"""Read URLs from a CSV file and print the HTTP status code for each."""
+
+from __future__ import annotations
 import asyncio
-import aiohttp
 import csv
 
-def load_urls(file_path):
-    """
-    Loads URLs from a CSV file
-    """
-    urls = []
-    with open(file_path, 'r', encoding='utf-8') as file:
-        csv_reader = csv.reader(file)
-        next(csv_reader) # Skip the header
-        urls = [row[0] for row in csv_reader]
-    return urls
+import aiohttp
 
-async def fetch_status(session, url):
-    """
-    Fetch the HTTP status code of a given URL 
-    """
+CSV_FILE = "Task 2 - Intern.csv"
+TIMEOUT = aiohttp.ClientTimeout(total=15)
+
+
+def load_urls(file_path: str) -> list[str]:
+    """Load URLs from the 'urls' column of the CSV file."""
+    with open(file_path, "r", encoding="utf-8-sig") as file:
+        return [row["urls"] for row in csv.DictReader(file)]
+
+
+async def fetch_status(session: aiohttp.ClientSession, url: str) -> tuple[str, str]:
+    """Return (url, status) using HEAD, falling back to GET if HEAD is unsupported."""
     try:
-        async with session.get(url, timeout=15) as response:
-            print(f"({response.status}) {url}")
-    except Exception as e:
-        print(f"(ERR) {url} — {e.__class__.__name__}")
+        async with session.head(url, allow_redirects=True) as response:
+            if response.status in (405, 501):
+                async with session.get(url) as get_response:
+                    return url, str(get_response.status)
+            return url, str(response.status)
+    except (aiohttp.ClientError, asyncio.TimeoutError) as e:
+        return url, f"ERR {type(e).__name__}"
 
-async def main():
-    """
-    load URLs and check their status codes concurrently.
-    """
-    urls = load_urls("Task 2 - Intern.csv")
-    
-    # Async helps us to save time and resources by making I/O-bound (network) requests in parallel 
-    async with aiohttp.ClientSession() as session:
-        tasks = [fetch_status(session, url) for url in urls]
-        await asyncio.gather(*tasks)
-        
+
+async def main() -> None:
+    urls = load_urls(CSV_FILE)
+    async with aiohttp.ClientSession(timeout=TIMEOUT) as session:
+        results = await asyncio.gather(*(fetch_status(session, url) for url in urls))
+    for url, status in results:
+        print(f"({status}) {url}")
+
+
 if __name__ == "__main__":
     asyncio.run(main())
-
