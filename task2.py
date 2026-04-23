@@ -1,7 +1,5 @@
 # CHINAZA - Task 2
 """Read URLs from a CSV file and print the HTTP status code for each."""
-
-from __future__ import annotations
 import asyncio
 import csv
 
